@@ -62,11 +62,19 @@ productRouter.put("/:id", async (req, res, next) => {
   try {
     const products = await getProducts()
     const index = products.findIndex((product) => product._id === req.params.id)
-    const oldProduct = products[index]
-    const updatedProduct = { ...oldProduct, ...req.body, updatedAt: new Date() }
-    products[index] = updatedProduct
-    await writeProducts(productArray)
-    res.send(updatedProduct)
+    if (index !== -1) {
+      const oldProduct = products[index]
+      const updatedProduct = {
+        ...oldProduct,
+        ...req.body,
+        updatedAt: new Date(),
+      }
+      products[index] = updatedProduct
+      await writeProducts(productArray)
+      res.send(updatedProduct)
+    } else {
+      next(createHttpError(404, `Product with id ${req.params.id} not found!`))
+    }
   } catch (error) {
     next(error)
   }
@@ -93,7 +101,7 @@ productRouter.delete("/:id", async (req, res, next) => {
       (product) => product._id !== req.params.body
     )
 
-    await writeProducts(productArray)
+    await writeProducts(remainingProducts)
     res.send()
   } catch (error) {
     next(error)
@@ -187,27 +195,6 @@ productRouter.get(
       if (oneReview) {
         res.send(oneReview)
       } else {
-        res.status(404).send({ message: "not found" })
-      }
-    } catch (error) {
-      next(error)
-    }
-  }
-)
-
-productRouter.post(
-  "/:id/reviews/:reviewId",
-
-  async (req, res, next) => {
-    try {
-      const reviews = await getReviews()
-
-      const oneReview = reviews.find(
-        (review) => review._id === req.params.reviewId
-      )
-      if (oneReview) {
-        res.send(oneReview)
-      } else {
         next(
           createHttpError(
             404,
@@ -243,7 +230,12 @@ productRouter.put(
         await writeReviews(reviews)
         res.send(updatedReview)
       } else {
-        res.status(404).send({ message: "not found" })
+        next(
+          createHttpError(
+            404,
+            `Review with id ${req.params.reviewId} not found!`
+          )
+        )
       }
     } catch (error) {
       next(error)
@@ -260,8 +252,17 @@ productRouter.delete(
       const remaining = reviews.filter(
         (review) => review._id !== req.params.reviewId
       )
-      await writeReviews(remaining)
-      res.status(200).send()
+      if (reviews.length !== remaining.length) {
+        await writeReviews(remaining)
+        res.status(200).send()
+      } else {
+        next(
+          createHttpError(
+            404,
+            `Review with id ${req.params.reviewId} not found!`
+          )
+        )
+      }
     } catch (error) {
       next(error)
     }
