@@ -10,7 +10,7 @@ const publicFolderPathProduct = join(process.cwd(), "./public/img/products")
 console.log("ROOT OF THE PROJECT:", process.cwd())
 
 console.log("DATA FOLDER PATH: ", apiFolderPath)
-const productsJSONPath = join(apiFolderPath, "/product/product.json")
+const productsJSONPath = join(apiFolderPath, "/product/products.json")
 const reviewsJSONPath = join(apiFolderPath, "/reviews/reviews.json")
 
 export const getProducts = () => readJSON(productsJSONPath)
