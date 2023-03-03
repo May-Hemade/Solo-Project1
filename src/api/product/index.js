@@ -85,7 +85,7 @@ productRouter.get("/:id", async (req, res, next) => {
 productRouter.delete("/:id", async (req, res, next) => {
   try {
     const products = await getProducts()
-    const remainingProducts = products.filter((product) => product._id !== req.params.body)
+    const remainingProducts = products.filter((product) => product._id !== req.params.id)
 
     await writeProducts(remainingProducts)
     res.send()
