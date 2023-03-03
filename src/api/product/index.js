@@ -16,7 +16,7 @@ productRouter.get("/", async (req, res, next) => {
       const specificCategory = products.filter((product) => product.category === category)
       res.send(specificCategory)
     } else {
-      res.send(productArray)
+      res.send(products)
     }
   } catch (err) {
     next(err)
@@ -39,7 +39,7 @@ productRouter.post("/", checkProductSchema, triggerBadRequest, async (req, res, 
     }
     const products = await getProducts()
     products.push(newProduct)
-    await writeProducts(productArray)
+    await writeProducts(products)
     res.status(200).send(newProduct)
   } catch (error) {
     next(error)
@@ -58,7 +58,7 @@ productRouter.put("/:id", async (req, res, next) => {
         updatedAt: new Date(),
       }
       products[index] = updatedProduct
-      await writeProducts(productArray)
+      await writeProducts(products)
       res.send(updatedProduct)
     } else {
       next(createHttpError(404, `Product with id ${req.params.id} not found!`))
