@@ -31,8 +31,8 @@ const productSchema = {
   //   },
   price: {
     in: ["body"],
-    isNumaric: {
-      errorMessage: "price is a mandatory field and needs to be a string!",
+    isNumeric: {
+      errorMessage: "price is a mandatory field and needs to be a number!",
     },
   },
   category: {
@@ -62,15 +62,4 @@ export const triggerBadRequest = (req, res, next) => {
     // 2.2 Else (no errors) --> normal flow (next)
     next()
   }
-}
-
-export const checkValidationResult = (req, res, next) => {
-  const errors = validationResult(req)
-  if (!errors.isEmpty()) {
-    const error = new Error("product post validation is failed")
-    error.status = 400
-    error.errors = errors.array()
-    next(error)
-  }
-  next()
 }

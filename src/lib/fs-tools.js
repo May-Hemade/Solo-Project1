@@ -13,7 +13,7 @@ console.log("DATA FOLDER PATH: ", apiFolderPath)
 const productsJSONPath = join(apiFolderPath, "/product/product.json")
 const reviewsJSONPath = join(apiFolderPath, "/reviews/reviews.json")
 
-export const getProduct = () => readJSON(productsJSONPath)
+export const getProducts = () => readJSON(productsJSONPath)
 export const writeProducts = (productsArray) =>
   writeJSON(productsJSONPath, productsArray)
 export const getReviews = () => readJSON(reviewsJSONPath)

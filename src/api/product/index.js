@@ -1,6 +1,6 @@
 import express from "express"
 import {
-  getProduct,
+  getProducts,
   getReviews,
   writeProducts,
   writeReviews,
@@ -8,24 +8,25 @@ import {
 import { checkProductSchema, triggerBadRequest } from "./validation.js"
 import uniqid from "uniqid"
 import { parseFile, uploadImage } from "../../upload/index.js"
+import createHttpError from "http-errors"
 
 const productRouter = express.Router()
 
 productRouter.get("/", async (req, res, next) => {
   try {
-    const productArray = await getProduct()
+    const products = await getProducts()
 
-    let category = req.query.category
+    const category = req.query.category
     if (category) {
-      let specificCategory = productArray.filter(
+      const specificCategory = products.filter(
         (product) => product.category === category
       )
       res.send(specificCategory)
     } else {
       res.send(productArray)
     }
-  } catch (error) {
-    res.send(500).send({ message: error.message })
+  } catch (err) {
+    next(err)
   }
 })
 
@@ -47,8 +48,8 @@ productRouter.post(
         updatedAt: new Date(),
         _id: uniqid(),
       }
-      const productArray = await getProduct()
-      productArray.push(newProduct)
+      const products = await getProducts()
+      products.push(newProduct)
       await writeProducts(productArray)
       res.status(200).send(newProduct)
     } catch (error) {
@@ -59,13 +60,11 @@ productRouter.post(
 
 productRouter.put("/:id", async (req, res, next) => {
   try {
-    const productArray = await getProduct()
-    const index = productArray.findIndex(
-      (product) => product._id === req.params.id
-    )
-    const oldProduct = productArray[index]
+    const products = await getProducts()
+    const index = products.findIndex((product) => product._id === req.params.id)
+    const oldProduct = products[index]
     const updatedProduct = { ...oldProduct, ...req.body, updatedAt: new Date() }
-    productArray[index] = updatedProduct
+    products[index] = updatedProduct
     await writeProducts(productArray)
     res.send(updatedProduct)
   } catch (error) {
@@ -75,10 +74,8 @@ productRouter.put("/:id", async (req, res, next) => {
 
 productRouter.get("/:id", async (req, res, next) => {
   try {
-    const productArray = await getProduct()
-    const product = productArray.find(
-      (product) => product._id === req.params.id
-    )
+    const products = await getProducts()
+    const product = products.find((product) => product._id === req.params.id)
     if (product) {
       res.send(product)
     } else {
@@ -91,8 +88,8 @@ productRouter.get("/:id", async (req, res, next) => {
 
 productRouter.delete("/:id", async (req, res, next) => {
   try {
-    const productArray = await getProduct()
-    const remainingProducts = productArray.filter(
+    const products = await getProducts()
+    const remainingProducts = products.filter(
       (product) => product._id !== req.params.body
     )
 
@@ -109,15 +106,15 @@ productRouter.post(
   uploadImage,
   async (req, res, next) => {
     try {
-      let fileAsJSONArray = await getProduct()
+      const fileAsJSONArray = await getProducts()
 
       const index = fileAsJSONArray.findIndex(
         (product) => product._id === req.params.id
       )
       if (index === -1) {
-        res
-          .status(404)
-          .send({ message: `product with ${req.params.id} is not found!` })
+        next(
+          createHttpError(404, `Product with id ${req.params.id} not found!`)
+        )
         return
       }
       const previousProductData = fileAsJSONArray[index]
@@ -130,7 +127,6 @@ productRouter.post(
       await writeProducts(fileAsJSONArray)
       res.send(changedProduct)
     } catch (error) {
-      res.send(500).send({ message: error.message })
       next(error)
     }
   }
@@ -150,10 +146,10 @@ productRouter.post(
         updatedAt: new Date(),
         _id: uniqid(),
       }
-      const reviewsArray = await getReviews()
+      const reviews = await getReviews()
 
-      reviewsArray.push(newReview)
-      await writeReviews(reviewsArray)
+      reviews.push(newReview)
+      await writeReviews(reviews)
       res.status(200).send(newReview)
     } catch (error) {
       next(error)
@@ -166,8 +162,8 @@ productRouter.get(
 
   async (req, res, next) => {
     try {
-      const reviewsArray = await getReviews()
-      const reviewOfProduct = reviewsArray.filter(
+      const reviews = await getReviews()
+      const reviewOfProduct = reviews.filter(
         (review) => review.productId === req.params.id
       )
 
@@ -183,9 +179,9 @@ productRouter.get(
 
   async (req, res, next) => {
     try {
-      const reviewsArray = await getReviews()
+      const reviews = await getReviews()
 
-      const oneReview = reviewsArray.find(
+      const oneReview = reviews.find(
         (review) => review._id === req.params.reviewId
       )
       if (oneReview) {
@@ -204,15 +200,20 @@ productRouter.post(
 
   async (req, res, next) => {
     try {
-      const reviewsArray = await getReviews()
+      const reviews = await getReviews()
 
-      const oneReview = reviewsArray.find(
+      const oneReview = reviews.find(
         (review) => review._id === req.params.reviewId
       )
       if (oneReview) {
         res.send(oneReview)
       } else {
-        res.status(404).send({ message: "not found" })
+        next(
+          createHttpError(
+            404,
+            `Review with id ${req.params.reviewId} not found!`
+          )
+        )
       }
     } catch (error) {
       next(error)
@@ -225,21 +226,21 @@ productRouter.put(
 
   async (req, res, next) => {
     try {
-      const reviewsArray = await getReviews()
+      const reviews = await getReviews()
 
-      const index = reviewsArray.findIndex(
+      const index = reviews.findIndex(
         (review) => review._id === req.params.reviewId
       )
 
       if (index !== -1) {
-        const oldReview = reviewsArray[index]
+        const oldReview = reviews[index]
         const updatedReview = {
           ...oldReview,
           ...req.body,
           updatedAt: new Date(),
         }
-        reviewsArray[index] = updatedReview
-        await writeReviews(reviewsArray)
+        reviews[index] = updatedReview
+        await writeReviews(reviews)
         res.send(updatedReview)
       } else {
         res.status(404).send({ message: "not found" })
@@ -255,8 +256,8 @@ productRouter.delete(
 
   async (req, res, next) => {
     try {
-      const reviewsArray = await getReviews()
-      const remaining = reviewsArray.filter(
+      const reviews = await getReviews()
+      const remaining = reviews.filter(
         (review) => review._id !== req.params.reviewId
       )
       await writeReviews(remaining)
