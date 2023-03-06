@@ -4,6 +4,7 @@ import { checkProductSchema, triggerBadRequest } from "./validation.js"
 import uniqid from "uniqid"
 import { parseFile, uploadImage } from "../../upload/index.js"
 import createHttpError from "http-errors"
+import { notFoundHandler } from "../../upload/errorHandlers.js"
 
 const productRouter = express.Router()
 
@@ -75,7 +76,7 @@ productRouter.get("/:id", async (req, res, next) => {
     if (product) {
       res.send(product)
     } else {
-      next(NotFound(`product with id ${req.params.id} not found!`))
+      next(notFoundHandler(`product with id ${req.params.id} not found!`))
     }
   } catch (error) {
     next(error)
